@@ -96,7 +96,19 @@ main {
   font-style: normal;
 }
 
-/* Show cursor on interactive elements */
+/* Show cursor on interactive elements only when connecting */
 a, button, [role="button"], [type="button"] {
   cursor: pointer;
+}
+
+body:not(.connecting) a,
+body:not(.connecting) button,
+body:not(.connecting) [role="button"],
+body:not(.connecting) [type="button"] {
+  cursor: none;
+}
+
+/* Remove the cursor-related styles for interactive elements */
+[data-rk] * {
+  cursor: auto !important;
 }
