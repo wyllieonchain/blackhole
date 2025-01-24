@@ -15,45 +15,47 @@ export default function Home() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
+    // Set canvas size
+    const updateCanvasSize = () => {
+      if (!canvas) return
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+    updateCanvasSize()
+    window.addEventListener('resize', updateCanvasSize)
 
-    const target = { x: canvas.width / 2, y: canvas.height / 2 }
+    const target = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
     let cursor = { x: 0, y: 0 }
 
-    function handleMouseMove(e: MouseEvent) {
+    const handleMouseMove = (e: MouseEvent) => {
       cursor.x = e.clientX
       cursor.y = e.clientY
     }
+    document.addEventListener('mousemove', handleMouseMove)
 
     function animate() {
-      if (!ctx) return
-      
-      // Make canvas transparent initially
+      if (!canvas || !ctx) return
+
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      
+
       let dx = target.x - cursor.x
       let dy = target.y - cursor.y
       cursor.x += dx * 0.05
       cursor.y += dy * 0.05
 
-      // Draw cursor with trail
       ctx.beginPath()
-      ctx.arc(cursor.x, cursor.y, 8, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-      ctx.shadowBlur = 20
-      ctx.shadowColor = 'white'
+      ctx.arc(cursor.x, cursor.y, 10, 0, Math.PI * 2)
+      ctx.fillStyle = 'white'
       ctx.fill()
 
-      // Always continue animation
       requestAnimationFrame(animate)
     }
 
-    document.addEventListener('mousemove', handleMouseMove)
     animate()
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('resize', updateCanvasSize)
     }
   }, [])
 
@@ -69,7 +71,7 @@ export default function Home() {
       </video>
       <canvas 
         ref={canvasRef} 
-        className="fixed inset-0 pointer-events-none"
+        className="fixed inset-0 pointer-events-none z-50"
       />
       <Header />
       <div className="flex flex-col items-center justify-center h-screen gap-8 relative">
