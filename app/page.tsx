@@ -83,18 +83,22 @@ export default function Home() {
 
           let dx = targetRef.current.x - orb.x
           let dy = targetRef.current.y - orb.y
-          orb.x += dx * 0.01
-          orb.y += dy * 0.01
+          orb.x += dx * 0.02
+          orb.y += dy * 0.02
 
           const distanceToCenter = Math.sqrt(dx * dx + dy * dy)
-          if (distanceToCenter < 1) {
+          if (distanceToCenter < 10) {
             orb.active = false
             return false
           }
 
+          // Calculate opacity based on distance to center
+          const maxDistance = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height) / 2
+          const opacity = Math.min(distanceToCenter / 100, 1) // Start fading when within 100px
+
           ctx.beginPath()
           ctx.arc(orb.x, orb.y, 10, 0, Math.PI * 2)
-          ctx.fillStyle = 'white'
+          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`
           ctx.fill()
 
           return true
