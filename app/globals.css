@@ -1,0 +1,102 @@
+@import '@rainbow-me/rainbowkit/styles.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend+Giga:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=New+Amsterdam:wght@400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background-gradient: linear-gradient(180deg, #2C2C2C 0%, #1A1A1A 100%);
+  --cursor-x: 0px;
+  --cursor-y: 0px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: var(--background-gradient);
+  color: white;
+  font-family: 'Lexend Giga', sans-serif;
+  cursor: none;
+  overflow: hidden;
+}
+
+header {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  padding: 1rem;
+  z-index: 100;
+  background: transparent !important;
+}
+
+header a {
+  color: white !important;
+  text-decoration: none;
+}
+
+header a:hover {
+  opacity: 0.8;
+}
+
+/* Style the RainbowKit button */
+[data-rk] button {
+  background: white !important;
+  color: black !important;
+  border: none !important;
+}
+
+[data-rk] button:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.black-hole-image {
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
+}
+
+@keyframes continuous-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hover-spin {
+  animation: continuous-spin 20s linear infinite paused;
+}
+
+.hover-spin:hover {
+  animation-play-state: running;
+}
+
+@font-face {
+  font-family: 'Equinox';
+  src: url('/fonts/Equinox.woff2') format('woff2'),
+       url('/fonts/Equinox.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Show cursor on interactive elements */
+a, button, [role="button"], [type="button"] {
+  cursor: pointer;
+}
