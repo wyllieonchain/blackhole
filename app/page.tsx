@@ -15,55 +15,47 @@ export default function Home() {
   const { isConnected } = useAccount()
   const cursorRef = useRef({ x: 0, y: 0 })
   const orbsRef = useRef<ShootingOrb[]>([])
+  const targetRef = useRef({ x: 0, y: 0 })
   const [showCustomCursor, setShowCustomCursor] = useState(true)
 
-  // Watch for RainbowKit modal
+  // Initialize cursor effect immediately
   useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.addedNodes.length > 0) {
-          // RainbowKit modal was added
-          const modalExists = document.querySelector('[data-rk]')
-          setShowCustomCursor(!modalExists)
-        }
-        if (mutation.removedNodes.length > 0) {
-          // RainbowKit modal was removed
-          setShowCustomCursor(true)
-        }
-      }
-    })
-
-    observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    // Update cursor style based on state
-    document.body.style.cursor = showCustomCursor ? 'none' : 'auto'
-
-    if (!showCustomCursor) return
-
+    document.body.style.cursor = 'none'
+    
     const canvas = canvasRef.current
     if (!canvas) return
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+    cursorRef.current = { 
+      x: window.innerWidth / 2, 
+      y: window.innerHeight / 2 
+    }
+    targetRef.current = { 
+      x: window.innerWidth / 2, 
+      y: canvas.height / 2 
+    }
+
     const updateCanvasSize = () => {
       if (!canvas) return
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
+      targetRef.current = {
+        x: canvas.width / 2,
+        y: canvas.height / 2
+      }
     }
-    updateCanvasSize()
     window.addEventListener('resize', updateCanvasSize)
 
-    const target = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
-    let cursor = cursorRef.current
-
     const handleMouseMove = (e: MouseEvent) => {
-      cursor.x = e.clientX
-      cursor.y = e.clientY
+      cursorRef.current.x = e.clientX
+      cursorRef.current.y = e.clientY
     }
+    document.addEventListener('mousemove', handleMouseMove)
 
     const handleClick = (e: MouseEvent) => {
       orbsRef.current.push({
@@ -72,48 +64,45 @@ export default function Home() {
         active: true
       })
     }
-
-    document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('click', handleClick)
 
     function animate() {
-      if (!canvas || !ctx) return
-
+      if (!ctx || !canvas) return
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // Draw cursor
-      ctx.beginPath()
-      ctx.arc(cursor.x, cursor.y, 10, 0, Math.PI * 2)
-      ctx.fillStyle = 'white'
-      ctx.fill()
-
-      // Draw and update all active orbs
-      orbsRef.current = orbsRef.current.filter(orb => {
-        if (!orb.active) return false
-
-        let dx = target.x - orb.x
-        let dy = target.y - orb.y
-        orb.x += dx * 0.01
-        orb.y += dy * 0.01
-
-        // Check if orb has reached center (with small threshold)
-        const distanceToCenter = Math.sqrt(dx * dx + dy * dy)
-        if (distanceToCenter < 1) {
-          orb.active = false
-          return false
-        }
-
+      if (showCustomCursor) {
+        // Draw cursor
         ctx.beginPath()
-        ctx.arc(orb.x, orb.y, 10, 0, Math.PI * 2)
+        ctx.arc(cursorRef.current.x, cursorRef.current.y, 10, 0, Math.PI * 2)
         ctx.fillStyle = 'white'
         ctx.fill()
 
-        return true
-      })
+        // Draw orbs
+        orbsRef.current = orbsRef.current.filter(orb => {
+          if (!orb.active) return false
+
+          let dx = targetRef.current.x - orb.x
+          let dy = targetRef.current.y - orb.y
+          orb.x += dx * 0.01
+          orb.y += dy * 0.01
+
+          const distanceToCenter = Math.sqrt(dx * dx + dy * dy)
+          if (distanceToCenter < 1) {
+            orb.active = false
+            return false
+          }
+
+          ctx.beginPath()
+          ctx.arc(orb.x, orb.y, 10, 0, Math.PI * 2)
+          ctx.fillStyle = 'white'
+          ctx.fill()
+
+          return true
+        })
+      }
 
       requestAnimationFrame(animate)
     }
-
     animate()
 
     return () => {
@@ -121,7 +110,29 @@ export default function Home() {
       document.removeEventListener('click', handleClick)
       window.removeEventListener('resize', updateCanvasSize)
     }
-  }, [showCustomCursor])
+  }, []) // Remove showCustomCursor dependency
+
+  // Separate modal observer effect
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+          const modalExists = document.querySelector('[data-rk]')
+          if (modalExists) {
+            document.body.style.cursor = 'auto'
+            setShowCustomCursor(false)
+          }
+        }
+        if (mutation.removedNodes.length > 0) {
+          document.body.style.cursor = 'none'
+          setShowCustomCursor(true)
+        }
+      }
+    })
+
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <main className="h-screen overflow-hidden relative">
@@ -135,7 +146,7 @@ export default function Home() {
       </video>
       <canvas 
         ref={canvasRef} 
-        className={`fixed inset-0 pointer-events-none ${showCustomCursor ? '' : 'hidden'}`}
+        className="fixed inset-0 pointer-events-none"
       />
       <Header />
       <div className="flex flex-col items-center justify-center h-screen gap-8 relative">
