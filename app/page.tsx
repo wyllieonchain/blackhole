@@ -138,13 +138,26 @@ export default function Home() {
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    // Try to play video on mobile
+    const video = document.querySelector('video')
+    if (video) {
+      video.play().catch(error => {
+        console.log("Video autoplay failed:", error)
+      })
+    }
+  }, [])
+
   return (
     <main className="h-screen overflow-hidden relative">
       <video 
         autoPlay 
         loop 
         muted 
+        playsInline
+        preload="auto"
         className="absolute w-full h-full object-cover"
+        webkit-playsinline="true"
       >
         <source src="/spacevideoLoop.mp4" type="video/mp4" />
       </video>
