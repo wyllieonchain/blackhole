@@ -174,8 +174,11 @@ export default function Home() {
           <p className="text-xl text-center font-golos text-gray-300">
             Watch $10k drain the financial system.
           </p>
+          <p className="text-sm text-gray-600 font-golos md:hidden mt-8">
+            COMING SOON
+          </p>
         </div>
-        <div className="absolute bottom-0 z-10 flex flex-col items-center gap-2">
+        <div className="absolute bottom-0 z-10 flex-col items-center gap-2 hidden md:flex">
           {isConnected && (
             <a 
               href="https://x.com/malcolmonchain" 
