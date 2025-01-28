@@ -1,8 +1,10 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount, useSignMessage } from 'wagmi'
 import Image from 'next/image'
 import Header from '../components/Header'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import currency from 'currency.js'
 
 interface ShootingOrb {
   x: number;
@@ -12,11 +14,54 @@ interface ShootingOrb {
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { isConnected } = useAccount()
+  const { isConnected, address } = useAccount()
   const cursorRef = useRef({ x: 0, y: 0 })
   const orbsRef = useRef<ShootingOrb[]>([])
   const targetRef = useRef({ x: 0, y: 0 })
   const [showCustomCursor, setShowCustomCursor] = useState(true)
+  const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
+  const [poolValue, setPoolValue] = useState(currency(10000))
+  const [previousBid, setPreviousBid] = useState(currency(0))
+  const [previousBidder, setPreviousBidder] = useState('0x00000...')
+  const [bidAmount, setBidAmount] = useState(currency(101.50))
+  const [refundAmount, setRefundAmount] = useState(currency(100))
+
+  const { signMessage, signMessageAsync } = useSignMessage()
+
+  const handleBidClick = async () => {
+    try {
+      const signature = await signMessageAsync({
+        message: `I confirm my bid of ${bidAmount.format()} for the pool.`,
+      })
+      
+      if (signature) {
+        console.log("Signature successful:", signature)
+        
+        // Reset timer
+        setTimeLeft(3600)
+
+        // Store current values before updating
+        const currentBid = bidAmount
+        const currentRefund = refundAmount
+
+        // Update previous bid info
+        setPreviousBid(currentBid)
+        setPreviousBidder(`${address?.substring(0, 7)}...`)
+
+        // Calculate new values
+        const newRefund = currentRefund.add(100)
+        const newBid = newRefund.multiply(1.015)
+        const poolIncrease = currentRefund.multiply(0.01)
+
+        // Update all values
+        setRefundAmount(newRefund)
+        setBidAmount(newBid)
+        setPoolValue(prev => prev.add(poolIncrease))
+      }
+    } catch (error) {
+      console.error('Signing failed:', error)
+    }
+  }
 
   // Initialize cursor effect immediately
   useEffect(() => {
@@ -148,6 +193,28 @@ export default function Home() {
     }
   }, [])
 
+  // Add new useEffect for countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prevTime => {
+        if (prevTime <= 0) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Add helper function to format time
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}mins ${secs}s`;
+  };
+
   return (
     <main className="h-screen overflow-hidden relative">
       <video 
@@ -172,24 +239,44 @@ export default function Home() {
             <div>
               <h2 className="text-xs custom:text-base text-white mb-2">TIME TO EXPIRY</h2>
               <div className="border border-white rounded-full p-2 custom:p-4">
-                <p className="text-lg custom:text-3xl text-white text-center">34mins 23s</p>
+                <p className="text-lg custom:text-3xl text-white text-center">
+                  {formatTime(timeLeft)}
+                </p>
               </div>
             </div>
 
             <div>
               <h2 className="text-xs custom:text-base text-white mb-2">POOL VALUE</h2>
               <div className="border border-white rounded-full p-2 custom:p-4">
-                <p className="text-lg custom:text-3xl text-white text-center">$12933</p>
+                <p className="text-lg custom:text-3xl text-white text-center">
+                  {poolValue.format()}
+                </p>
               </div>
             </div>
 
             <div>
               <h2 className="text-xs custom:text-base text-white mb-2">WANT THE POOL?</h2>
-              <button className="w-full bg-white text-black rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors">
-                Place Bid for $303
-              </button>
+              {isConnected ? (
+                <button 
+                  onClick={handleBidClick}
+                  className="w-full bg-white text-black rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors"
+                >
+                  Place Bid for {bidAmount.format()}
+                </button>
+              ) : (
+                <ConnectButton.Custom>
+                  {({ openConnectModal }) => (
+                    <button 
+                      onClick={openConnectModal}
+                      className="w-full bg-white text-black rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors"
+                    >
+                      Place Bid for {bidAmount.format()}
+                    </button>
+                  )}
+                </ConnectButton.Custom>
+              )}
               <p className="text-[10px] custom:text-xs text-gray-400 text-center mt-2">
-                You'll get $300 back if your bid isn't the last!
+                You'll get {refundAmount.format()} back if your bid isn't the last!
               </p>
             </div>
           </div>
@@ -198,14 +285,14 @@ export default function Home() {
           <div className="bg-[#d7d7d7]/40 backdrop-blur-sm rounded-3xl p-4 custom:p-8 w-[300px] custom:w-[400px] h-[260px] custom:h-[360px] grid grid-rows-[1fr_auto_1fr] items-center order-2 custom:order-1 mt-6 custom:mt-0 relative">
             <div className="text-center self-center">
               <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BID</h2>
-              <p className="text-xl custom:text-4xl text-white">$202</p>
+              <p className="text-xl custom:text-4xl text-white">{previousBid.format()}</p>
             </div>
 
             <div className="w-3/4 h-[1px] bg-white opacity-50 mx-auto" />
             
             <div className="text-center self-center">
               <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BIDDER</h2>
-              <p className="text-xl custom:text-4xl text-white">0xB1db4...</p>
+              <p className="text-xl custom:text-4xl text-white">{previousBidder}</p>
             </div>
           </div>
         </div>
