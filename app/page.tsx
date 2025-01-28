@@ -161,42 +161,53 @@ export default function Home() {
       >
         <source src="/spacevideoLoop.mp4" type="video/mp4" />
       </video>
-      <canvas 
-        ref={canvasRef} 
-        className="fixed inset-0 pointer-events-none"
-      />
-      <Header />
-      <div className="flex flex-col items-center justify-center h-screen gap-8 relative">
-        <div className="z-10 flex flex-col items-center gap-4">
-          <h1 className="text-4xl text-center font-golos text-gray-200">
-            The Black Hole for Capital
-          </h1>
-          <p className="text-xl text-center font-golos text-gray-300">
-            Watch $10k drain the financial system.
-          </p>
-          <p className="text-sm text-gray-600 font-golos md:hidden mt-8">
-            COMING SOON
-          </p>
-        </div>
-        <div className="absolute bottom-0 z-10 flex-col items-center gap-2 hidden md:flex">
-          {isConnected && (
-            <a 
-              href="https://x.com/malcolmonchain" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <Image
-                src="/Xlogo.svg"
-                alt="X (Twitter) Logo"
-                width={24}
-                height={24}
-              />
-            </a>
-          )}
-          <p className="text-sm text-gray-600 font-golos">
-            COMING SOON
-          </p>
+      <div className="absolute inset-0 bg-black/50" />
+      
+      <div className="relative z-10 flex flex-col h-screen">
+        <Header />
+        
+        <div className="flex-1 flex flex-col custom:flex-row justify-center custom:justify-between items-center max-w-7xl w-full px-6 pt-12">
+          {/* Timer and Pool Info (Top on mobile) */}
+          <div className="flex flex-col gap-3 custom:gap-6 w-[300px] custom:w-[600px] mr-0 custom:mr-6 custom:ml-32 order-1 custom:order-2">
+            <div>
+              <h2 className="text-xs custom:text-base text-white mb-2">TIME TO EXPIRY</h2>
+              <div className="border border-white rounded-full p-2 custom:p-4">
+                <p className="text-lg custom:text-3xl text-white text-center">34mins 23s</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xs custom:text-base text-white mb-2">POOL VALUE</h2>
+              <div className="border border-white rounded-full p-2 custom:p-4">
+                <p className="text-lg custom:text-3xl text-white text-center">$12933</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xs custom:text-base text-white mb-2">WANT THE POOL?</h2>
+              <button className="w-full bg-white text-black rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors">
+                Place Bid for $303
+              </button>
+              <p className="text-[10px] custom:text-xs text-gray-400 text-center mt-2">
+                You'll get $300 back if your bid isn't the last!
+              </p>
+            </div>
+          </div>
+
+          {/* Previous Bid Info (Bottom on mobile) */}
+          <div className="bg-[#d7d7d7]/40 backdrop-blur-sm rounded-3xl p-4 custom:p-8 w-[300px] custom:w-[400px] h-[260px] custom:h-[360px] grid grid-rows-[1fr_auto_1fr] items-center order-2 custom:order-1 mt-6 custom:mt-0 relative">
+            <div className="text-center self-center">
+              <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BID</h2>
+              <p className="text-xl custom:text-4xl text-white">$202</p>
+            </div>
+
+            <div className="w-3/4 h-[1px] bg-white opacity-50 mx-auto" />
+            
+            <div className="text-center self-center">
+              <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BIDDER</h2>
+              <p className="text-xl custom:text-4xl text-white">0xB1db4...</p>
+            </div>
+          </div>
         </div>
       </div>
     </main>
