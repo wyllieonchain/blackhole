@@ -181,7 +181,7 @@ export default function Home() {
         <div className="absolute bottom-0 z-10 flex-col items-center gap-2 hidden md:flex">
           {isConnected && (
             <a 
-              href="https://x.com/malcolmonchain" 
+              href="https://x.com/bidBlackhole" 
               target="_blank" 
               rel="noopener noreferrer"
               className="hover:opacity-80 transition-opacity"
