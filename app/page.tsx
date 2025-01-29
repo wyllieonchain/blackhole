@@ -179,21 +179,19 @@ export default function Home() {
           </p>
         </div>
         <div className="absolute bottom-0 z-10 flex-col items-center gap-2 hidden md:flex">
-          {isConnected && (
-            <a 
-              href="https://x.com/bidBlackhole" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <Image
-                src="/Xlogo.svg"
-                alt="X (Twitter) Logo"
-                width={24}
-                height={24}
-              />
-            </a>
-          )}
+          <a 
+            href="https://x.com/bidBlackhole" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:opacity-80 transition-opacity"
+          >
+            <Image
+              src="/Xlogo.svg"
+              alt="X (Twitter) Logo"
+              width={24}
+              height={24}
+            />
+          </a>
           <p className="text-sm text-gray-600 font-golos">
             COMING SOON
           </p>
