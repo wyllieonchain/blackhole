@@ -23,7 +23,7 @@ export default function Header() {
           
           <div className="flex items-center">
             <a 
-              href="https://x.com/malcolmonchain" 
+              href="https://x.com/bidBlackhole" 
               target="_blank" 
               rel="noopener noreferrer"
               className="hover:opacity-80 transition-opacity mr-6"
