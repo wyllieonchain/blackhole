@@ -3,31 +3,17 @@
 import * as React from 'react';
 import {
   RainbowKitProvider,
-  getDefaultWallets,
-  connectorsForWallets,
+  getDefaultConfig,
 } from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
-import { mainnet } from 'wagmi/chains';
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { baseSepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createConfig, http } from 'wagmi';
 
-const { wallets } = getDefaultWallets({
-  appName: 'My Web3 App',
-  projectId: 'YOUR_PROJECT_ID',
-});
-
-// Add wagmi config
-const connectors = connectorsForWallets(wallets, {
-  appName: 'My Web3 App',
-  projectId: 'YOUR_PROJECT_ID',
-});
-
-const config = createConfig({
-  connectors,
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http(),
-  },
+const config = getDefaultConfig({
+  appName: 'Black Hole',
+  projectId: 'YOUR_WALLET_CONNECT_PROJECT_ID',
+  chains: [baseSepolia],
+  ssr: true,
 });
 
 const queryClient = new QueryClient();

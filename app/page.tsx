@@ -1,10 +1,13 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useAccount, useSignMessage } from 'wagmi'
+import { useAccount } from 'wagmi'
 import Image from 'next/image'
 import Header from '../components/Header'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import currency from 'currency.js'
+import { useVaultContract } from '@/hooks/useVaultContract'
+import { VaultABI } from '@/contracts/VaultABI'
+const VAULT_ADDRESS = '0x2937CaC77030abF478bc991c942bb57bC8E6780D'
 
 interface ShootingOrb {
   x: number;
@@ -19,49 +22,68 @@ export default function Home() {
   const orbsRef = useRef<ShootingOrb[]>([])
   const targetRef = useRef({ x: 0, y: 0 })
   const [showCustomCursor, setShowCustomCursor] = useState(true)
-  const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
-  const [poolValue, setPoolValue] = useState(currency(10000))
-  const [previousBid, setPreviousBid] = useState(currency(0))
-  const [previousBidder, setPreviousBidder] = useState('0x00000...')
-  const [bidAmount, setBidAmount] = useState(currency(101.50))
-  const [refundAmount, setRefundAmount] = useState(currency(100))
+  const TIMER_DURATION = 60
+  const [timeLeft, setTimeLeft] = useState(TIMER_DURATION)
+  const [hasClaimed, setHasClaimed] = useState(false)
 
-  const { signMessage, signMessageAsync } = useSignMessage()
+  // Get contract data
+  const {
+    prizePool,
+    highestBid,
+    highestBidder,
+    lastBidTime,
+    nextBidAmount,
+    placeBid,
+    claim,
+    isBidLoading,
+    isBidSuccess,
+    isGameOver,
+    isWinner
+  } = useVaultContract()
 
+  // Update timer based on lastBidTime
+  useEffect(() => {
+    if (!lastBidTime) return
+
+    const updateTimer = () => {
+      const now = Math.floor(Date.now() / 1000)
+      const timeSinceLastBid = now - Number(lastBidTime)
+      const timeRemaining = TIMER_DURATION - timeSinceLastBid
+      setTimeLeft(timeRemaining > 0 ? timeRemaining : 0)
+    }
+
+    updateTimer()
+    const timer = setInterval(updateTimer, 1000)
+
+    return () => clearInterval(timer)
+  }, [lastBidTime])
+
+  // Handle bid placement
   const handleBidClick = async () => {
     try {
-      const signature = await signMessageAsync({
-        message: `I confirm my bid of ${bidAmount.format()} for the pool.`,
-      })
-      
-      if (signature) {
-        console.log("Signature successful:", signature)
-        
-        // Reset timer
-        setTimeLeft(3600)
-
-        // Store current values before updating
-        const currentBid = bidAmount
-        const currentRefund = refundAmount
-
-        // Update previous bid info
-        setPreviousBid(currentBid)
-        setPreviousBidder(`${address?.substring(0, 7)}...`)
-
-        // Calculate new values
-        const newRefund = currentRefund.add(100)
-        const newBid = newRefund.multiply(1.015)
-        const poolIncrease = currentRefund.multiply(0.01)
-
-        // Update all values
-        setRefundAmount(newRefund)
-        setBidAmount(newBid)
-        setPoolValue(prev => prev.add(poolIncrease))
-      }
+      if (!nextBidAmount) return
+      await placeBid()
     } catch (error) {
-      console.error('Signing failed:', error)
+      console.error('Bid failed:', error)
     }
   }
+
+  // Update the claim handler
+  const handleClaimClick = async () => {
+    try {
+      await claim()
+      setHasClaimed(true)
+    } catch (error) {
+      console.error('Claim failed:', error)
+    }
+  }
+
+  // Format values for display (change 1e6 to 1e18 for testnet token)
+  const formattedPrizePool = currency(Number(prizePool || 0) / 1e18).format()
+  const formattedHighestBid = currency(Number(highestBid || 0) / 1e18).format()
+  const formattedNextBid = currency(Number(nextBidAmount || 0) / 1e18).format()
+  const formattedRefundAmount = currency((Number(nextBidAmount || 0) / 1e18) / 1.015).format()
+  const shortenedBidder = highestBidder ? `${highestBidder.substring(0, 7)}...` : '0x00000...'
 
   // Initialize cursor effect immediately
   useEffect(() => {
@@ -192,22 +214,6 @@ export default function Home() {
       })
     }
   }, [])
-
-  // Add new useEffect for countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prevTime => {
-        if (prevTime <= 0) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
   // Add helper function to format time
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -234,7 +240,7 @@ export default function Home() {
         <Header />
         
         <div className="flex-1 flex flex-col custom:flex-row justify-center custom:justify-between items-center max-w-7xl w-full px-6 pt-12">
-          {/* Timer and Pool Info (Top on mobile) */}
+          {/* Timer and Pool Info */}
           <div className="flex flex-col gap-3 custom:gap-6 w-[300px] custom:w-[600px] mr-0 custom:mr-6 custom:ml-32 order-1 custom:order-2">
             <div>
               <h2 className="text-xs custom:text-base text-white mb-2">TIME TO EXPIRY</h2>
@@ -249,7 +255,7 @@ export default function Home() {
               <h2 className="text-xs custom:text-base text-white mb-2">POOL VALUE</h2>
               <div className="border border-white rounded-full p-2 custom:p-4">
                 <p className="text-lg custom:text-3xl text-white text-center">
-                  {poolValue.format()}
+                  {formattedPrizePool}
                 </p>
               </div>
             </div>
@@ -258,10 +264,21 @@ export default function Home() {
               <h2 className="text-xs custom:text-base text-white mb-2">WANT THE POOL?</h2>
               {isConnected ? (
                 <button 
-                  onClick={handleBidClick}
-                  className="w-full bg-white text-black rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors"
+                  onClick={isGameOver ? handleClaimClick : handleBidClick}
+                  disabled={isBidLoading || (isGameOver && !isWinner) || hasClaimed}
+                  className={`w-full rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium ${
+                    hasClaimed || (isGameOver && !isWinner)
+                      ? 'bg-gray-400 text-white pointer-events-none' 
+                      : 'bg-white text-black hover:bg-gray-100 disabled:opacity-50'
+                  }`}
                 >
-                  Place Bid for {bidAmount.format()}
+                  {isBidLoading ? 'Loading...' : 
+                    isGameOver ? 
+                      (isWinner ? 
+                        (hasClaimed ? 'Congrats on the win!' : 'Claim the pool') : 
+                        'You did not win') : 
+                      `Place Bid for ${formattedNextBid}`
+                  }
                 </button>
               ) : (
                 <ConnectButton.Custom>
@@ -270,33 +287,40 @@ export default function Home() {
                       onClick={openConnectModal}
                       className="w-full bg-white text-black rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors"
                     >
-                      Place Bid for {bidAmount.format()}
+                      Place Bid for {formattedNextBid}
                     </button>
                   )}
                 </ConnectButton.Custom>
               )}
-              <p className="text-[10px] custom:text-xs text-gray-400 text-center mt-2">
-                You'll get {refundAmount.format()} back if your bid isn't the last!
-              </p>
+              {!isGameOver && (
+                <p className="text-[10px] custom:text-xs text-gray-400 text-center mt-2">
+                  You'll get {formattedRefundAmount} back if your bid isn't the last!
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Previous Bid Info (Bottom on mobile) */}
+          {/* Previous Bid Info */}
           <div className="bg-[#d7d7d7]/40 backdrop-blur-sm rounded-3xl p-4 custom:p-8 w-[300px] custom:w-[400px] h-[260px] custom:h-[360px] grid grid-rows-[1fr_auto_1fr] items-center order-2 custom:order-1 mt-6 custom:mt-0 relative">
             <div className="text-center self-center">
               <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BID</h2>
-              <p className="text-xl custom:text-4xl text-white">{previousBid.format()}</p>
+              <p className="text-xl custom:text-4xl text-white">{formattedHighestBid}</p>
             </div>
 
             <div className="w-3/4 h-[1px] bg-white opacity-50 mx-auto" />
             
             <div className="text-center self-center">
               <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BIDDER</h2>
-              <p className="text-xl custom:text-4xl text-white">{previousBidder}</p>
+              <p className="text-xl custom:text-4xl text-white">{shortenedBidder}</p>
             </div>
           </div>
         </div>
       </div>
+
+      <canvas 
+        ref={canvasRef} 
+        className="fixed inset-0 pointer-events-none"
+      />
     </main>
-  );
+  )
 }
