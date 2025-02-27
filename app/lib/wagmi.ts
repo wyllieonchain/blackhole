@@ -20,7 +20,7 @@ const config = getDefaultConfig({
     transports: {
         [baseSepolia.id]: http(BLAST_RPC_URL), // ✅ Ensures correct RPC URL
     },
-    // storage: null, // ✅ Fixes autoConnect issue
+    storage: null, // ✅ Fixes autoConnect issue
 });
 
 export default config;

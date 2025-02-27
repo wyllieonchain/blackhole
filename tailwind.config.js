@@ -15,7 +15,7 @@ module.exports = {
         golos: ['Golos Text', 'serif'],
       },
       screens: {
-        'custom': '1160px',
+        'custom': '968px',
       },
     },
   },

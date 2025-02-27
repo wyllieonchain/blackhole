@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { waitForTransactionReceipt, writeContract, simulateContract } from '@wagmi/core';
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -65,13 +65,57 @@ export default function Home({ vaultData }: HomeProps) {
     args: [address as `0x${string}`, VAULT_ADDRESS]
   });
 
-  // Add helper function to format time
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}mins ${secs}s`;
-  };
-
+  // Add these new state variables for the animation
+  const [animatedValue, setAnimatedValue] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(true);
+  const targetValue = Number(vaultData.prizePool || 0) / 1e6;
+  
+  // Format the animated value
+  const formattedAnimatedValue = currency(animatedValue).format();
+  
+  // Animation effect
+  useEffect(() => {
+    if (!isAnimating) return;
+    
+    // Start from a lower value (about 10% of the target)
+    let startValue = Math.max(1, targetValue * 0.1);
+    setAnimatedValue(startValue);
+    
+    // Calculate animation duration and steps
+    const duration = 2000; // 2 seconds
+    const steps = 30;
+    const stepDuration = duration / steps;
+    
+    // Use logarithmic increments for a more dramatic effect
+    const increment = (targetValue - startValue) / steps;
+    let currentStep = 0;
+    
+    const timer = setInterval(() => {
+      currentStep++;
+      
+      if (currentStep >= steps) {
+        setAnimatedValue(targetValue);
+        setIsAnimating(false);
+        clearInterval(timer);
+      } else {
+        // Accelerating increment formula
+        const progress = currentStep / steps;
+        const easedProgress = progress < 0.5 
+          ? 2 * progress * progress 
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        
+        const newValue = startValue + (targetValue - startValue) * easedProgress;
+        setAnimatedValue(newValue);
+      }
+    }, stepDuration);
+    
+    return () => clearInterval(timer);
+  }, [targetValue, isAnimating]);
+  
+  // Reset animation when prize pool changes
+  useEffect(() => {
+    setIsAnimating(true);
+  }, [vaultData.prizePool]);
 
   useEffect(() => {
     setIsClient(true);
@@ -338,17 +382,25 @@ export default function Home({ vaultData }: HomeProps) {
     }
   }
 
+  // Add helper function to format time
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}mins ${secs}s`;
+  };
+
   return (
     <main className="h-screen overflow-hidden relative">
       <video
         autoPlay
-        loop
+        loop={true}
         muted
         playsInline
         preload="auto"
         className="absolute w-full h-full object-cover"
         webkit-playsinline="true"
       >
+        <source src="/api/video" type="video/mp4" />
         <source src="/spacevideoLoop.mp4" type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-black/50" />
@@ -356,86 +408,129 @@ export default function Home({ vaultData }: HomeProps) {
       <div className="relative z-10 flex flex-col h-screen">
         <Header />
 
-        <div className="flex-1 flex flex-col custom:flex-row justify-center custom:justify-between items-center max-w-7xl w-full px-6 pt-12">
-          {/* Timer and Pool Info */}
-          <div className="flex flex-col gap-3 custom:gap-6 w-[300px] custom:w-[600px] mr-0 custom:mr-6 custom:ml-32 order-1 custom:order-2">
-            <div>
-              {vaultData.hasStarted && vaultData.highestBid === "0" ?
-                <h2 className="text-xs custom:text-base text-white mb-2">Place the first bid to start the clock</h2> : (
-                  <h2 className="text-xs custom:text-base text-white mb-2">TIME TO EXPIRY</h2>
-                )
-              }
-
-              <div className="border border-white rounded-full p-2 custom:p-4">
-                <p className="text-lg custom:text-3xl text-white text-center">
+        {/* Game over state */}
+        {vaultData.isGameOver ? (
+          <div className="flex-1 flex flex-col items-center justify-center w-full px-6">
+            <div className="text-center max-w-md">
+              <p className="text-white text-xl custom:text-2xl mb-4">
+                <a 
+                  href={`https://etherscan.io/address/${vaultData.highestBidder}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:underline border-b border-white/50"
+                >
+                  {shortenedBidder}
+                </a> won the game.
+              </p>
+              <p className="text-white text-sm custom:text-base mb-8">
+                Follow us on <a 
+                  href="https://x.com/bidBlackhole" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:underline border-b border-white/50"
+                >
+                  X
+                </a> for the next game
+              </p>
+              
+              {isWinner && isConnected && (
+                <button
+                  onClick={handleClaimClick}
+                  disabled={isLoading || hasClaimed || vaultData.isClaimed}
+                  className={`rounded-3xl py-3 px-8 text-base custom:text-lg font-medium ${
+                    hasClaimed || vaultData.isClaimed
+                      ? 'bg-gray-400 text-white'
+                      : 'bg-white text-black hover:bg-gray-100 disabled:opacity-50'
+                  }`}
+                >
+                  {isLoading ? 'Loading...' : 
+                   (hasClaimed || vaultData.isClaimed) ? 'Congrats on the win!' : 'Claim Pool'}
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center w-full px-6">
+            {/* Timer at the top for mobile, bottom for desktop */}
+            <div className="custom:absolute custom:bottom-16 mb-8 custom:mb-0 flex flex-col items-center w-[300px]">
+              <h2 className="text-xs custom:text-base text-white mb-2 text-center">
+                {vaultData.hasStarted && vaultData.highestBid === "0" ?
+                  "Place the first bid to start the clock" : "TIME TO EXPIRY"
+                }
+              </h2>
+              <div className="border-2 border-white rounded-3xl p-3 w-full h-[126px] flex items-center justify-center custom:border-0 custom:p-0 custom:h-auto">
+                <p className="text-2xl custom:text-5xl text-white text-center font-light">
                   {formatTime(timeLeft)}
                 </p>
               </div>
             </div>
 
-            <div>
-              <h2 className="text-xs custom:text-base text-white mb-2">POOL VALUE</h2>
-              <div className="border border-white rounded-full p-2 custom:p-4">
-                <p className="text-lg custom:text-3xl text-white text-center">
-                  {formattedPrizePool}
-                </p>
+            {/* Main Content - Previous Bid Info and Bid Button */}
+            <div className="flex flex-col custom:flex-row justify-center items-center custom:items-start w-full max-w-7xl gap-8 custom:gap-32">
+              {/* Right Section - Pool Value and Bid Button - Moved up for mobile */}
+              <div className="flex flex-col w-[300px] custom:w-[400px] gap-4 order-1 custom:order-2">
+                {/* Pool Value */}
+                <div className="flex flex-col items-center">
+                  <h2 className="text-xs custom:text-base text-white mb-2 text-center">POOL VALUE</h2>
+                  <div className="border-2 border-white rounded-3xl p-3 custom:p-5 w-full h-[126px] custom:h-[210px] flex items-center justify-center">
+                    <p className="text-3xl custom:text-6xl text-white text-center">
+                      {isAnimating ? formattedAnimatedValue : formattedPrizePool}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bid Button */}
+                <div className="flex flex-col">
+                  {isConnected && isClient ? (
+                    <button
+                      onClick={handleBidClick}
+                      disabled={isLoading}
+                      className="w-full bg-white text-black rounded-3xl p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 disabled:opacity-50"
+                    >
+                      {isLoading ? 'Loading...' : `Place Bid for ${formattedNextBid}`}
+                    </button>
+                  ) : (
+                    <ConnectButton.Custom>
+                      {({ openConnectModal }) => (
+                        <button
+                          onClick={openConnectModal}
+                          className="w-full bg-white text-black rounded-2xl p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors"
+                        >
+                          Place Bid for {formattedNextBid}
+                        </button>
+                      )}
+                    </ConnectButton.Custom>
+                  )}
+                  <p className="text-[10px] custom:text-xs text-gray-400 text-center mt-2">
+                    You'll be returned {formattedRefundAmount} if your bid is not the last
+                  </p>
+                </div>
+              </div>
+
+              {/* Previous Bid Info - Moved down for mobile */}
+              <div className="bg-[#d7d7d7]/40 backdrop-blur-sm rounded-3xl p-4 custom:p-8 w-[300px] custom:w-[400px] h-[156px] custom:h-[340px] grid grid-rows-[1fr_auto_1fr] items-center order-2 custom:order-1">
+                <div className="text-center self-center">
+                  <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BID</h2>
+                  <p className="text-lg custom:text-3xl text-white">{formattedHighestBid}</p>
+                </div>
+
+                <div className="w-3/4 h-[1px] bg-white opacity-50 mx-auto" />
+
+                <div className="text-center self-center">
+                  <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BIDDER</h2>
+                  <a 
+                    href={`https://etherscan.io/address/${vaultData.highestBidder}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-lg custom:text-3xl text-white hover:underline border-b border-white/50"
+                  >
+                    {shortenedBidder}
+                  </a>
+                </div>
               </div>
             </div>
-
-            <div>
-              <h2 className="text-xs custom:text-base text-white mb-2">WANT THE POOL?</h2>
-              {isConnected && isClient ? (
-                <button
-                  onClick={vaultData.isGameOver ? handleClaimClick : handleBidClick}
-                  disabled={isLoading || (vaultData.isGameOver && !isWinner) || hasClaimed || vaultData.isClaimed}
-                  className={`w-full rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium ${hasClaimed || (vaultData.isGameOver && !isWinner)
-                    ? 'bg-gray-400 text-white pointer-events-none'
-                    : 'bg-white text-black hover:bg-gray-100 disabled:opacity-50'
-                    }`}
-                >
-                  { isLoading ? 'Loading...' :
-                    vaultData.isGameOver ?
-                      (isWinner ?
-                        (hasClaimed || vaultData.isClaimed ? 'Congrats on the win!' : 'Claim the pool') :
-                        'You did not win') :
-                      `Place Bid for ${formattedNextBid}`
-                  }
-                </button>
-              ) : (
-                <ConnectButton.Custom>
-                  {({ openConnectModal }) => (
-                    <button
-                      onClick={openConnectModal}
-                      className="w-full bg-white text-black rounded-full p-2 custom:p-4 text-xs custom:text-lg font-medium hover:bg-gray-100 transition-colors"
-                    >
-                      Place Bid for {formattedNextBid}
-                    </button>
-                  )}
-                </ConnectButton.Custom>
-              )}
-              {!vaultData.isGameOver && (
-                <p className="text-[10px] custom:text-xs text-gray-400 text-center mt-2">
-                  You'll get {formattedRefundAmount} back if your bid isn't the last!
-                </p>
-              )}
-            </div>
           </div>
-
-          {/* Previous Bid Info */}
-          <div className="bg-[#d7d7d7]/40 backdrop-blur-sm rounded-3xl p-4 custom:p-8 w-[300px] custom:w-[400px] h-[260px] custom:h-[360px] grid grid-rows-[1fr_auto_1fr] items-center order-2 custom:order-1 mt-6 custom:mt-0 relative">
-            <div className="text-center self-center">
-              <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BID</h2>
-              <p className="text-xl custom:text-4xl text-white">{formattedHighestBid}</p>
-            </div>
-
-            <div className="w-3/4 h-[1px] bg-white opacity-50 mx-auto" />
-
-            <div className="text-center self-center">
-              <h2 className="text-xs custom:text-base text-white mb-2">PREVIOUS BIDDER</h2>
-              <p className="text-xl custom:text-4xl text-white">{shortenedBidder}</p>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       <canvas
