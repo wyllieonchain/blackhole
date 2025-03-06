@@ -3,6 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend+Giga:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=New+Amsterdam:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -20,9 +21,11 @@ body {
   min-height: 100vh;
   background: var(--background-gradient);
   color: white;
-  font-family: 'Lexend Giga', sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   cursor: none;
   overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 header {
@@ -49,6 +52,7 @@ header a:hover {
   background: white !important;
   color: black !important;
   border: none !important;
+  font-size: 1rem !important;
 }
 
 [data-rk] button:hover {
@@ -111,4 +115,56 @@ body:not(.connecting) [type="button"] {
 /* Remove the cursor-related styles for interactive elements */
 [data-rk] * {
   cursor: auto !important;
+}
+
+/* Add specific font size adjustments for different elements */
+h1, .text-3xl, .text-6xl {
+  font-size: 1.5rem !important; /* Larger size for headings */
+  line-height: 1.1 !important;
+}
+
+h2, .text-2xl, .text-xl {
+  font-size: 1rem !important; /* Medium headings */
+  line-height: 1.2 !important;
+}
+
+p, button, a, .text-base, .text-lg {
+  font-size: 1.2rem !important; /* Regular text */
+  line-height: 1.3 !important;
+}
+
+.text-sm, .text-xs {
+  font-size: 1rem !important; /* Small text */
+  line-height: 1.4 !important;
+}
+
+/* Specific adjustments for your UI components */
+[data-rk] button {
+  font-size: 1rem !important;
+}
+
+/* Add specific adjustments for mobile if needed */
+@media (max-width: 768px) {
+  h1, .text-3xl, .text-6xl {
+    font-size: 1.2rem !important;
+  }
+  
+  h2, .text-2xl, .text-xl {
+    font-size: 0.8rem !important;
+  }
+  
+  p, button, a, .text-base, .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  .text-sm, .text-xs {
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Add this class to your globals.css file */
+.blackhole-image {
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
 }

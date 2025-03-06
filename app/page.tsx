@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAccount } from 'wagmi'
 import Image from 'next/image'
 import Header from '../components/Header'
+import CountdownTimer from './components/CountdownTimer'
 
 interface ShootingOrb {
   x: number;
@@ -169,16 +170,14 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center h-screen gap-8 relative">
         <div className="z-10 flex flex-col items-center gap-4">
           <h1 className="text-4xl text-center font-golos text-gray-200">
-            The Black Hole for Capital
+            The Blackhole for Capital
           </h1>
           <p className="text-xl text-center font-golos text-gray-300">
-            Watch $10k drain the financial system.
+            Watch $10k drain the financial system
           </p>
-          <p className="text-sm text-gray-600 font-golos md:hidden mt-8">
-            COMING SOON
-          </p>
+          <CountdownTimer />
         </div>
-        <div className="absolute bottom-0 z-10 flex-col items-center gap-2 hidden md:flex">
+        <div className="absolute bottom-0 z-10 flex-col items-center gap-2 flex mb-4">
           <a 
             href="https://x.com/bidBlackhole" 
             target="_blank" 
@@ -192,9 +191,6 @@ export default function Home() {
               height={24}
             />
           </a>
-          <p className="text-sm text-gray-600 font-golos">
-            COMING SOON
-          </p>
         </div>
       </div>
     </main>

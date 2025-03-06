@@ -10,8 +10,9 @@ module.exports = {
         'spin-slow': 'spin linear infinite',
       },
       fontFamily: {
-        sans: ['Lexend Giga', 'sans-serif'],
+        sans: ['Bebas Neue', 'sans-serif'],
         golos: ['Golos Text', 'serif'],
+        lexend: ['Lexend Giga', 'sans-serif'],
       },
     },
   },

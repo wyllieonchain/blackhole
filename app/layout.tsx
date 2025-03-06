@@ -6,8 +6,8 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Black Hole',
-  description: 'Watch $10k drain the financial system.',
+  title: 'BLACKHOLE',
+  description: 'BLACKHOLE - The ultimate bidding game',
   icons: {
     icon: '/favicon.png',
   },
