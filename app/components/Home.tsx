@@ -410,44 +410,57 @@ export default function Home({ vaultData }: HomeProps) {
 
         {/* Game over state */}
         {vaultData.isGameOver ? (
-          <div className="flex-1 flex flex-col items-center justify-center w-full px-6">
-            <div className="text-center max-w-md">
-              <p className="text-white text-xl custom:text-2xl mb-4">
-                <a 
-                  href={`https://etherscan.io/address/${vaultData.highestBidder}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:underline border-b border-white/50"
-                >
-                  {shortenedBidder}
-                </a> won the game.
-              </p>
-              <p className="text-white text-sm custom:text-base mb-8">
-                Follow us on <a 
-                  href="https://x.com/bidBlackhole" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:underline border-b border-white/50"
-                >
-                  X
-                </a> for the next game
-              </p>
-              
-              {isWinner && isConnected && (
-                <button
-                  onClick={handleClaimClick}
-                  disabled={isLoading || hasClaimed || vaultData.isClaimed}
-                  className={`rounded-3xl py-3 px-8 text-base custom:text-lg font-medium ${
-                    hasClaimed || vaultData.isClaimed
-                      ? 'bg-gray-400 text-white'
-                      : 'bg-white text-black hover:bg-gray-100 disabled:opacity-50'
-                  }`}
-                >
-                  {isLoading ? 'Loading...' : 
-                   (hasClaimed || vaultData.isClaimed) ? 'Congrats on the win!' : 'Claim Pool'}
-                </button>
-              )}
+          <div className="flex-1 flex flex-col items-center w-full px-6 py-8">
+            <div className="flex-1 flex items-center">
+              <div className="text-center max-w-md">
+                <p className="text-white text-xl custom:text-2xl mb-4">
+                  <a 
+                    href={`https://etherscan.io/address/${vaultData.highestBidder}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="hover:underline border-b border-white/50"
+                  >
+                    {shortenedBidder}
+                  </a> won the game.
+                </p>
+                <p className="text-white text-sm custom:text-base mb-8">
+                  <a 
+                    href="https://x.com/XYZ" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="hover:underline border-b border-white/50"
+                  >
+                    @XYZ
+                  </a> is a game theory guru and predicted the end.
+                </p>
+                
+                {isWinner && isConnected && (
+                  <button
+                    onClick={handleClaimClick}
+                    disabled={isLoading || hasClaimed || vaultData.isClaimed}
+                    className={`rounded-3xl py-3 px-8 text-base custom:text-lg font-medium ${
+                      hasClaimed || vaultData.isClaimed
+                        ? 'bg-gray-400 text-white'
+                        : 'bg-white text-black hover:bg-gray-100 disabled:opacity-50'
+                    }`}
+                  >
+                    {isLoading ? 'Loading...' : 
+                     (hasClaimed || vaultData.isClaimed) ? 'Congrats on the win!' : 'Claim Pool'}
+                  </button>
+                )}
+              </div>
             </div>
+
+            <p className="text-white text-sm custom:text-base">
+              Follow us on <a 
+                href="https://x.com/bidBlackhole" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:underline border-b border-white/50"
+              >
+                X
+              </a> for the next game
+            </p>
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center w-full px-6">
