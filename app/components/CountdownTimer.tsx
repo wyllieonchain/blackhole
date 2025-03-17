@@ -50,7 +50,7 @@ export default function CountdownTimer() {
   
   return (
     <div className="countdown-timer mt-6 mb-8 text-center">
-      <div className="flex justify-center gap-4 text-gray-300">
+      <div className="flex justify-center gap-4 text-gray-200">
         <div className="flex flex-col items-center">
           <div className="text-2xl">{timeLeft.days}</div>
           <div className="text-sm">DAYS</div>

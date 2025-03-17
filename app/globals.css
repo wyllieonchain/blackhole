@@ -146,11 +146,11 @@ p, button, a, .text-base, .text-lg {
 /* Add specific adjustments for mobile if needed */
 @media (max-width: 768px) {
   h1, .text-3xl, .text-6xl {
-    font-size: 1.2rem !important;
+    font-size: 2rem !important;
   }
   
   h2, .text-2xl, .text-xl {
-    font-size: 0.8rem !important;
+    font-size: 1.5rem !important;
   }
   
   p, button, a, .text-base, .text-lg {
